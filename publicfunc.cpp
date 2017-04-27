@@ -1,0 +1,82 @@
+#include "publicfunc.h"
+
+
+PublicFunc::PublicFunc(QObject *parent) : QObject(parent)
+{
+
+}
+
+
+
+quint8 PublicFunc::XORcheck(const QByteArray &msg)
+{
+    quint16 i;
+    quint8 ret = 0;
+
+    for (i=0; i<msg.size(); i++)
+    {
+        ret ^= msg.at(i);
+    }
+
+    return ret;
+}
+
+void PublicFunc::encodeFuguProtocolPacket(const QByteArray &infoUnit, quint8 cmd, QByteArray &sbuf)
+{
+    quint16 len;
+    quint8 buf[0x200] = {0};
+    quint16 tlen = 0;
+    quint16 xorSize;
+
+    len = infoUnit.size();
+    buf[tlen++] = '@';
+    buf[tlen++] = '@';
+    buf[tlen++] = (quint8)(len >>8);
+    buf[tlen++] = (quint8)len;
+    buf[tlen++] = cmd;
+
+    if (!infoUnit.isEmpty())
+    {
+        memcpy(&buf[tlen], infoUnit.data(), infoUnit.size());
+    }
+
+    tlen += infoUnit.size();
+    xorSize = tlen - 2;
+    QByteArray xorArray(QByteArray((const char *)&buf[2], xorSize));
+    buf[tlen++] = XORcheck(xorArray);
+    buf[tlen++] = '#';
+    buf[tlen++] = '#';
+
+
+    sbuf = QByteArray((const char *)buf, tlen);
+}
+
+quint16 PublicFunc::decodeFuguProtocolPacket(const QByteArray &rbuf, quint8 &tCmd, QByteArray &tbuf)
+{
+    quint8 buf[0x200] = {0};
+    quint16 len = 0;
+    quint16 tlen;
+
+    len = rbuf.size();
+    memcpy(buf, rbuf.data(), len);
+
+    if (buf[0] == '@' && buf[1] == '@' && buf[len - 2] == '#' && buf[len - 1] == '#')
+    {
+        tlen = buf[2];
+        tlen = (tlen << 8) | buf[3];
+        tCmd = buf[4];
+        QByteArray xorArray(QByteArray((const char *)&buf[2], tlen + 3));
+
+        if (XORcheck(xorArray) == buf[len - 3])
+        {
+            if (tlen > 0)
+            {
+                memcpy(tbuf.data(), &buf[5], tlen);
+            }
+
+            return rbuf.size();
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">font: 75 10pt &quot;楷体&quot;;</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <widget class="QGroupBox" name="groupBox">
+    <property name="geometry">
+     <rect>
+      <x>11</x>
+      <y>395</y>
+      <width>277</width>
+      <height>157</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string/>
+    </property>
+    <layout class="QGridLayout" name="gridLayout_2">
+     <item row="0" column="0">
+      <layout class="QHBoxLayout" name="horizontalLayout_7">
+       <item>
+        <widget class="QLabel" name="deviceIdLabel">
+         <property name="text">
+          <string>设备 ID:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="editDeviceId"/>
+       </item>
+      </layout>
+     </item>
+     <item row="1" column="0">
+      <layout class="QHBoxLayout" name="horizontalLayout_6">
+       <item>
+        <widget class="QLabel" name="nandFlashSizeLabel">
+         <property name="text">
+          <string>Nand Flash 空间:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="editNandFlashSize"/>
+       </item>
+      </layout>
+     </item>
+     <item row="2" column="0">
+      <layout class="QHBoxLayout" name="horizontalLayout_5">
+       <item>
+        <widget class="QLabel" name="sdcardSizeLabel">
+         <property name="text">
+          <string>SD卡空间:       </string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="editSdcardSize"/>
+       </item>
+      </layout>
+     </item>
+     <item row="3" column="0">
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <item>
+        <widget class="QLabel" name="spiFlashSizeLabel">
+         <property name="text">
+          <string>Spi Flash 空间  </string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="editSpiFlashSize"/>
+       </item>
+      </layout>
+     </item>
+     <item row="4" column="0">
+      <layout class="QHBoxLayout" name="horizontalLayout_8">
+       <item>
+        <widget class="QPushButton" name="readDeviceInfoPushButton">
+         <property name="text">
+          <string>读设备信息</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="buttonWriteSysDateTime">
+         <property name="text">
+          <string>同步时间</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_2">
+    <property name="geometry">
+     <rect>
+      <x>294</x>
+      <y>395</y>
+      <width>505</width>
+      <height>101</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string/>
+    </property>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QRadioButton" name="sdcardChk">
+           <property name="text">
+            <string>SD CARD</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="spiflashChk">
+           <property name="text">
+            <string>SPI FLASH</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="nandflashChk">
+           <property name="text">
+            <string>NAND FLASH</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>地址: 0X</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="editAddress"/>
+       </item>
+      </layout>
+     </item>
+     <item row="1" column="0">
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QLineEdit" name="editBinPath"/>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnBrowse">
+         <property name="text">
+          <string>浏览</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnSend">
+         <property name="text">
+          <string>写入</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item row="2" column="0">
+      <widget class="QProgressBar" name="progressBar">
+       <property name="value">
+        <number>0</number>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QTabWidget" name="tabWidget">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>781</width>
+      <height>381</height>
+     </rect>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="tabLogShow">
+     <attribute name="title">
+      <string>显示日志</string>
+     </attribute>
+     <layout class="QGridLayout" name="gridLayout_3">
+      <item row="0" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout_9">
+        <item>
+         <widget class="QCheckBox" name="ckLogShow">
+          <property name="text">
+           <string>log</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="ckHexShow">
+          <property name="text">
+           <string>Hex显示</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>                                                                                </string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="labelSendCnt">
+          <property name="text">
+           <string>S:            </string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="labelRecvCnt">
+          <property name="text">
+           <string>R:            </string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="1" column="0">
+       <widget class="QTextEdit" name="logTextEdit">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>211</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="tabStateShow">
+     <attribute name="title">
+      <string>显示状态</string>
+     </attribute>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>19</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuCalls">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="separator"/>
+    <addaction name="actionQuit"/>
+   </widget>
+   <widget class="QMenu" name="menuTool">
+    <property name="title">
+     <string>工具</string>
+    </property>
+    <addaction name="actionConfigure"/>
+    <addaction name="actionClear"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>帮助</string>
+    </property>
+    <addaction name="actionAbout"/>
+   </widget>
+   <addaction name="menuCalls"/>
+   <addaction name="menuTool"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionQuit">
+   <property name="icon">
+    <iconset resource="images.qrc">
+     <normaloff>:/images/application-exit.png</normaloff>:/images/application-exit.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Quit</string>
+   </property>
+   <property name="toolTip">
+    <string>Quit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+X</string>
+   </property>
+  </action>
+  <action name="actionConfigure">
+   <property name="icon">
+    <iconset resource="images.qrc">
+     <normaloff>:/images/settings.png</normaloff>:/images/settings.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Configure</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
+   </property>
+  </action>
+  <action name="actionClear">
+   <property name="icon">
+    <iconset resource="images.qrc">
+     <normaloff>:/images/clear.png</normaloff>:/images/clear.png</iconset>
+   </property>
+   <property name="text">
+    <string>C&amp;lear</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+L</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="icon">
+    <iconset resource="images.qrc">
+     <normaloff>:/images/app.ico</normaloff>:/images/app.ico</iconset>
+   </property>
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <tabstops>
+  <tabstop>logTextEdit</tabstop>
+  <tabstop>readDeviceInfoPushButton</tabstop>
+  <tabstop>editBinPath</tabstop>
+  <tabstop>buttonWriteSysDateTime</tabstop>
+  <tabstop>btnSend</tabstop>
+  <tabstop>spiflashChk</tabstop>
+  <tabstop>sdcardChk</tabstop>
+  <tabstop>nandflashChk</tabstop>
+  <tabstop>btnBrowse</tabstop>
+  <tabstop>editDeviceId</tabstop>
+  <tabstop>editNandFlashSize</tabstop>
+  <tabstop>editSdcardSize</tabstop>
+  <tabstop>editSpiFlashSize</tabstop>
+ </tabstops>
+ <resources>
+  <include location="images.qrc"/>
+ </resources>
+ <connections/>
+</ui>
