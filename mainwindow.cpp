@@ -31,11 +31,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->editNandFlashSize->setReadOnly(true);
     ui->editSdcardSize->setReadOnly(true);
     ui->editSpiFlashSize->setReadOnly(true);
-
-    ui->editDeviceId->setReadOnly(true);
-    ui->editNandFlashSize->setReadOnly(true);
-    ui->editSpiFlashSize->setReadOnly(true);
-    ui->editSdcardSize->setReadOnly(true);
     ui->editSoftwareVersion->setReadOnly(true);
 
     connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
