@@ -228,7 +228,7 @@ bool MyThread::writePcDateTimeToDev(QSerialPort &serial)
         return false;
     }
 
-    emit showMsgBox(tr("当前系统时间"), QString(QDateTime::currentDateTime().toString("yyyy.MM.dd.HH.mm.ss")));
+//    emit showMsgBox(tr("当前系统时间"), QString(QDateTime::currentDateTime().toString("yyyy.MM.dd.HH.mm.ss")));
     return true;
 }
 
