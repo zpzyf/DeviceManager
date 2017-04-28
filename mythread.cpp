@@ -222,7 +222,7 @@ bool MyThread::writePcDateTimeToDev(QSerialPort &serial)
     QByteArray tbuf;
 
     if (!syncDataToTerminal(serial, QString(QDateTime::currentDateTime().toString("yyyy.MM.dd.HH.mm.ss")).toLatin1(),
-                            DEV_SYNC_DATE_TIME, tbuf, DEV_SYNC_DATE_TIME))
+                            DEV_SYNC_DATE_TIME, tbuf, ACK))
     {
         emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
         return false;
@@ -286,7 +286,7 @@ void MyThread::run()
             return;
         }
         //发送同步消息
-        if (!syncDataToTerminal(serial, NULL, SOH, tbuf, SOH))
+        if (!syncDataToTerminal(serial, NULL, SOH, tbuf, ACK))
         {
             serial.close();
             emit showStatusMsg(tr("空闲"));
@@ -306,6 +306,11 @@ void MyThread::run()
             break;
         case THREAD_STA_SYNC_DATETIME:
             if (!writePcDateTimeToDev(serial))
+            {
+                serial.close();
+                emit showStatusMsg(tr("空闲"));
+                return ;
+            }
             break;
         default:
             break;
@@ -313,7 +318,7 @@ void MyThread::run()
 
         msleep(50);
         //发送结束标志
-        if (!syncDataToTerminal(serial, NULL, EOT, tbuf, EOT))
+        if (!syncDataToTerminal(serial, NULL, EOT, tbuf, ACK))
         {
 
             serial.close();

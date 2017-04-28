@@ -65,9 +65,8 @@ quint16 PublicFunc::decodeFuguProtocolPacket(const QByteArray &rbuf, quint8 &tCm
         tlen = buf[2];
         tlen = (tlen << 8) | buf[3];
         tCmd = buf[4];
-        QByteArray xorArray(QByteArray((const char *)&buf[2], tlen + 3));
 
-        if (XORcheck(xorArray) == buf[len - 3])
+        if (XORcheck(QByteArray((const char *)&buf[2], tlen + 3)) == buf[len - 3])
         {
             if (tlen > 0)
             {
