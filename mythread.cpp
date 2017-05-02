@@ -5,6 +5,7 @@
 #include <QMessageBox>
 #include <QMutexLocker>
 #include <QTime>
+#include <QJsonObject>
 
 MyThread::MyThread()
 {
@@ -120,6 +121,13 @@ bool MyThread::handleSendFile(QSerialPort &serial)
     rbuf.resize(0x200);
     tbuf.resize(0x200);
 
+    //发送同步消息
+    if (!syncDataToTerminal(serial, NULL, SOH, tbuf, ACK))
+    {
+        serial.close();
+        emit showStatusMsg(tr("空闲"));
+        return false;
+    }
     msleep(50);
     //发送保存位置
     if (spiflashIsChk)
@@ -211,6 +219,15 @@ bool MyThread::handleSendFile(QSerialPort &serial)
                     msleep(50);
                 }
             }
+
+            //发送结束标志
+            if (!syncDataToTerminal(serial, NULL, EOT, tbuf, ACK))
+            {
+
+                serial.close();
+                emit showStatusMsg(tr("空闲"));
+                return false;
+            }
         }
     }
 
@@ -228,22 +245,26 @@ bool MyThread::writePcDateTimeToDev(QSerialPort &serial)
         return false;
     }
 
-//    emit showMsgBox(tr("当前系统时间"), QString(QDateTime::currentDateTime().toString("yyyy.MM.dd.HH.mm.ss")));
     return true;
 }
 
 bool MyThread::readInfoFromDev(QSerialPort &serial)
 {
     QByteArray tbuf;
-    tbuf.resize(0x100);
+    tbuf.resize(0x200);
 
-    if (!syncDataToTerminal(serial, NULL, DEV_READ_INFO, tbuf, DEV_READ_INFO))
+    if (!syncDataToTerminal(serial, NULL, DEV_READ_INFO, tbuf, SDAT))
     {
         emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
         return false;
     }
-    //解析tbuf，
-
+    //解析tbuf
+    QStringList list(tr(tbuf).split(","));
+    emit showDevInfo(list.at(0),
+                     list.at(1),
+                     list.at(2),
+                     list.at(3),
+                     list.at(4));
     return true;
 }
 
@@ -285,13 +306,6 @@ void MyThread::run()
             emit showStatusMsg(tr("Open %1 error").arg(settingPara.name));
             return;
         }
-        //发送同步消息
-        if (!syncDataToTerminal(serial, NULL, SOH, tbuf, ACK))
-        {
-            serial.close();
-            emit showStatusMsg(tr("空闲"));
-            return;
-        }
 
         switch (status) {
         case THREAD_STA_SENDFILE:
@@ -303,6 +317,12 @@ void MyThread::run()
             }
             break;
         case THREAD_STA_READ_DEV_INFO:
+            if (!readInfoFromDev(serial))
+            {
+                serial.close();
+                emit showStatusMsg(tr("空闲"));
+                return ;
+            }
             break;
         case THREAD_STA_SYNC_DATETIME:
             if (!writePcDateTimeToDev(serial))
@@ -314,21 +334,7 @@ void MyThread::run()
             break;
         default:
             break;
-        }
-
-        msleep(50);
-        //发送结束标志
-        if (!syncDataToTerminal(serial, NULL, EOT, tbuf, ACK))
-        {
-
-            serial.close();
-            emit showStatusMsg(tr("空闲"));
-            return;
-        }
-
-        serial.close();
-        emit showStatusMsg(tr("空闲"));
-        isStopped = true;
+        }        
 
         switch (status) {
         case THREAD_STA_SENDFILE:
@@ -345,9 +351,11 @@ void MyThread::run()
         }
     }
 
-    qDebug("finish!!! %s", TIMEMS);
-
+    serial.close();
+    emit showStatusMsg(tr("空闲"));
+    isStopped = true;
     status = THREAD_STA_NONE;
+    qDebug("finish!!! %s", TIMEMS);
 }
 
 void MyThread::stop(bool st)
