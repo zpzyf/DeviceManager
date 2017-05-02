@@ -21,6 +21,7 @@ signals:
     void showStatusMsg(const QString msg);
     void showMsgBox(const QString tital, const QString msg);
     void saveErrInfoLog(const QString errMsg);
+    void showDevInfo(const QString ID, const QString nandSize, const QString sdcardSize, const QString spiSize, const QString softwareVersion);
 private slots:
     void handleError(QSerialPort::SerialPortError);     //处理串口错误
 protected:
