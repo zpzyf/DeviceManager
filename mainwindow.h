@@ -35,6 +35,7 @@ private slots:
     void showStatusMessage(const QString msg);     //显示状态信息
     void warningBox(const QString tital, const QString msg);
     void saveErrLog(const QString errMsg);   //保存错误信息
+    void showDeviceInformation(const QString ID, const QString nandSize, const QString sdcardSize, const QString spiSize, const QString softwareVersion);
 public:        
 
 private:
