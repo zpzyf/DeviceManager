@@ -48,6 +48,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&thread, SIGNAL(showStatusMsg(QString)), this, SLOT(showStatusMessage(QString)));
     connect(&thread, SIGNAL(showMsgBox(QString,QString)), this, SLOT(warningBox(QString,QString)));
     connect(&thread, SIGNAL(saveErrInfoLog(QString)), this, SLOT(saveErrLog(QString)));
+    connect(&thread, SIGNAL(showDevInfo(QString,QString,QString,QString,QString)), this, SLOT(showDeviceInformation(QString,QString,QString,QString,QString)));
 }
 
 MainWindow::~MainWindow()
@@ -307,4 +308,13 @@ void MainWindow::saveErrLog(const QString errMsg)
     out<<errMsg<<endl;
     out.flush();
     logFile.close();
+}
+
+void MainWindow::showDeviceInformation(const QString ID, const QString nandSize, const QString sdcardSize, const QString spiSize, const QString softwareVersion)
+{
+    ui->editDeviceId->setText(ID);
+    ui->editNandFlashSize->setText(nandSize);
+    ui->editSdcardSize->setText(sdcardSize);
+    ui->editSpiFlashSize->setText(spiSize);
+    ui->editSoftwareVersion->setText(softwareVersion);
 }
