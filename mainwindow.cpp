@@ -33,6 +33,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->editSpiFlashSize->setReadOnly(true);
     ui->editSoftwareVersion->setReadOnly(true);
 
+//    ui->editAddress->setValidator(new QIntValidator(0, 100000000, this));  //限制输入范围0~8个字符
+
+
     connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
     connect(ui->actionConfigure, &QAction::triggered, settingsDialog, &SettingsDialog::show);
     connect(ui->actionClear, &QAction::triggered, this, &MainWindow::clearLog);
@@ -289,7 +292,7 @@ void MainWindow::showStatusMessage(const QString msg)
 
 void MainWindow::warningBox(const QString tital, const QString msg)
 {
-    QMessageBox::information(this,tital, msg,QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+    QMessageBox::information(this, tital, msg, QMessageBox::Ok, QMessageBox::Ok);
 }
 
 void MainWindow::saveErrLog(const QString errMsg)
