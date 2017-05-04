@@ -185,7 +185,24 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="editAddress"/>
+        <widget class="QLineEdit" name="editAddress">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+           <horstretch>8</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnSaveToFile">
+         <property name="text">
+          <string>读出</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>
