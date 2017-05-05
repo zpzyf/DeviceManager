@@ -112,7 +112,7 @@ bool MyThread::syncDataToTerminal(QSerialPort &serial,const QByteArray &sendBuf,
     return true;
 }
 
-bool MyThread::handleSendFile(QSerialPort &serial)
+bool MyThread::readFlashToSaveAsFile(QSerialPort &serial)
 {
     QByteArray sbuf,rbuf, tbuf;
     qint32 i = 0;
@@ -124,15 +124,15 @@ bool MyThread::handleSendFile(QSerialPort &serial)
     //发送同步消息
     if (!syncDataToTerminal(serial, NULL, SOH, tbuf, ACK))
     {
-        serial.close();
-        emit showStatusMsg(tr("空闲"));
+        closeSerialToIdle(serial);
         return false;
     }
+
     msleep(50);
     //发送保存位置
     if (spiflashIsChk)
     {
-        if (!syncDataToTerminal(serial, tr("SPI").toLatin1(), POSI, tbuf, POSI))
+        if (!syncDataToTerminal(serial, tr("SPI").toLatin1(), POSI, tbuf, ACK))
         {
             emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
             return false;
@@ -140,7 +140,7 @@ bool MyThread::handleSendFile(QSerialPort &serial)
     }
     else if (nandflashIsChk)
     {
-        if (!syncDataToTerminal(serial, tr("NAND").toLatin1(), POSI, tbuf, POSI))
+        if (!syncDataToTerminal(serial, tr("NAND").toLatin1(), POSI, tbuf, ACK))
         {
             emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
             return false;
@@ -148,11 +148,150 @@ bool MyThread::handleSendFile(QSerialPort &serial)
     }
     else if (sdcardIsChk)
     {
-        if (!syncDataToTerminal(serial, tr("SDCARD_FAT").toLatin1(), POSI, tbuf, POSI))
+        if (!syncDataToTerminal(serial, tr("SDCARD_FAT").toLatin1(), POSI, tbuf, ACK))
         {
             emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
             return false;
         }
+    }
+    //发送读取标志
+    msleep(50);
+
+    if (!syncDataToTerminal(serial, NULL, READ, tbuf, ACK))
+    {
+        emit saveErrInfoLog(tr("%1 %2(%3): READ error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
+        return false;
+    }
+
+    msleep(50);
+    //发送文件
+    if (!filePath.isEmpty())
+    {
+        emit setProcessRange(0, 100);
+        emit setProcessValue(0);
+
+        quint32 totalSize = QFileInfo(filePath).size();
+        //检查文件是否有内容
+        if (!filePath.isEmpty() && totalSize > 0)
+        {
+            //打开文件
+            QFile file(filePath);
+
+            if (file.open(QFile::ReadOnly | QFile::Text))
+            {
+                QByteArray fData;
+                fData.resize(0x200);
+                quint32 cumulativeCnt; //累计要发送的数目
+                emit setProcessValue(0);
+                cumulativeCnt = 0;
+                file.seek(0);
+                i = 0;
+
+                while (!file.atEnd())
+                {
+                    if (isStopped)
+                    {
+                        break;
+                    }
+
+                    if (i != 0)
+                    {
+                        setAddress += 256;
+                    }
+
+                    if (cumulativeCnt + totalSize%256 == totalSize)
+                    {
+                        fData = file.read(totalSize%256);
+                        fData.prepend(PublicFunc::intToByte(setAddress));
+
+                        if (!syncDataToTerminal(serial, fData, RDAT, tbuf, ACK))
+                        {
+                            emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
+                            return false;
+                        }
+                        cumulativeCnt += totalSize%256;
+                    }
+                    else
+                    {
+                        fData = file.read(256);
+                        fData.prepend(PublicFunc::intToByte(setAddress));
+
+                        if (!syncDataToTerminal(serial, fData, RDAT, tbuf, ACK))
+                        {
+                            emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
+                            return false;
+                        }
+                        cumulativeCnt += 256;
+                    }
+
+                    file.seek(cumulativeCnt);
+                    emit setProcessValue(cumulativeCnt);
+                    i++;
+                    msleep(50);
+                }
+            }
+
+            //发送结束标志
+            if (!syncDataToTerminal(serial, NULL, EOT, tbuf, ACK))
+            {
+
+                closeSerialToIdle(serial);
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool MyThread::writeFileToFlash(QSerialPort &serial)
+{
+    QByteArray sbuf,rbuf, tbuf;
+    qint32 i = 0;
+
+    sbuf.resize(0x200);
+    rbuf.resize(0x200);
+    tbuf.resize(0x200);
+
+    //发送同步消息
+    if (!syncDataToTerminal(serial, NULL, SOH, tbuf, ACK))
+    {
+        closeSerialToIdle(serial);
+        return false;
+    }
+    msleep(50);
+    //发送保存位置
+    if (spiflashIsChk)
+    {
+        if (!syncDataToTerminal(serial, tr("SPI").toLatin1(), POSI, tbuf, ACK))
+        {
+            emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
+            return false;
+        }
+    }
+    else if (nandflashIsChk)
+    {
+        if (!syncDataToTerminal(serial, tr("NAND").toLatin1(), POSI, tbuf, ACK))
+        {
+            emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
+            return false;
+        }
+    }
+    else if (sdcardIsChk)
+    {
+        if (!syncDataToTerminal(serial, tr("SDCARD_FAT").toLatin1(), POSI, tbuf, ACK))
+        {
+            emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
+            return false;
+        }
+    }
+
+    msleep(50);
+    //发送写标志
+    if (!syncDataToTerminal(serial, NULL, WRITE, tbuf, ACK))
+    {
+        emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
+        return false;
     }
 
     msleep(50);
@@ -185,15 +324,15 @@ bool MyThread::handleSendFile(QSerialPort &serial)
 
                     if (i != 0)
                     {
-                        sendAddr += 256;
+                        setAddress += 256;
                     }
 
                     if (cumulativeCnt + totalSize%256 == totalSize)
                     {
                         fData = file.read(totalSize%256);
-                        fData.prepend(PublicFunc::intToByte(sendAddr));
+                        fData.prepend(PublicFunc::intToByte(setAddress));
 
-                        if (!syncDataToTerminal(serial, fData, SDAT, tbuf, SDAT))
+                        if (!syncDataToTerminal(serial, fData, SDAT, tbuf, ACK))
                         {
                             emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
                             return false;
@@ -203,9 +342,9 @@ bool MyThread::handleSendFile(QSerialPort &serial)
                     else
                     {
                         fData = file.read(256);
-                        fData.prepend(PublicFunc::intToByte(sendAddr));
+                        fData.prepend(PublicFunc::intToByte(setAddress));
 
-                        if (!syncDataToTerminal(serial, fData, SDAT, tbuf, SDAT))
+                        if (!syncDataToTerminal(serial, fData, SDAT, tbuf, ACK))
                         {
                             emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
                             return false;
@@ -224,8 +363,7 @@ bool MyThread::handleSendFile(QSerialPort &serial)
             if (!syncDataToTerminal(serial, NULL, EOT, tbuf, ACK))
             {
 
-                serial.close();
-                emit showStatusMsg(tr("空闲"));
+                closeSerialToIdle(serial);
                 return false;
             }
         }
@@ -239,7 +377,7 @@ bool MyThread::writePcDateTimeToDev(QSerialPort &serial)
     QByteArray tbuf;
 
     if (!syncDataToTerminal(serial, QString(QDateTime::currentDateTime().toString("yyyy.MM.dd.HH.mm.ss")).toLatin1(),
-                            DEV_SYNC_DATE_TIME, tbuf, ACK))
+                            SYNC_DATE_TIME_TO_DEV, tbuf, ACK))
     {
         emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
         return false;
@@ -253,19 +391,26 @@ bool MyThread::readInfoFromDev(QSerialPort &serial)
     QByteArray tbuf;
     tbuf.resize(0x200);
 
-    if (!syncDataToTerminal(serial, NULL, DEV_READ_INFO, tbuf, SDAT))
+    if (!syncDataToTerminal(serial, NULL, READ_DEV_ID, tbuf, SDAT))
     {
         emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
         return false;
     }
     //解析tbuf
-    QStringList list(tr(tbuf).split(","));
-    emit showDevInfo(list.at(0),
-                     list.at(1),
-                     list.at(2),
-                     list.at(3),
-                     list.at(4));
+    //QStringList list(tr(tbuf).split(","));
+    emit showLog(0x00, tr("%1 byte").arg(tr(tbuf).length()).toLatin1());
+    emit showDevInfo(tr(tbuf),
+                     "NULL",
+                     "NULL",
+                     "NULL",
+                     "NULL");
     return true;
+}
+
+void MyThread::closeSerialToIdle(QSerialPort &serial)
+{
+    serial.close();
+    emit showStatusMsg(tr("空闲"));
 }
 
 void MyThread::setHandleStatus(quint8 sta)
@@ -282,7 +427,6 @@ void MyThread::run()
 
     if (!isStopped)
     {
-
         //打开串口
         serial.setPortName(settingPara.name);
         serial.setBaudRate(settingPara.baudRate);
@@ -309,26 +453,30 @@ void MyThread::run()
 
         switch (status) {
         case THREAD_STA_SENDFILE:
-            if (!handleSendFile(serial))
+            if (!writeFileToFlash(serial))
             {
-                serial.close();
-                emit showStatusMsg(tr("空闲"));
+                closeSerialToIdle(serial);
                 return ;
             }
             break;
         case THREAD_STA_READ_DEV_INFO:
             if (!readInfoFromDev(serial))
             {
-                serial.close();
-                emit showStatusMsg(tr("空闲"));
+                closeSerialToIdle(serial);
                 return ;
             }
             break;
         case THREAD_STA_SYNC_DATETIME:
             if (!writePcDateTimeToDev(serial))
             {
-                serial.close();
-                emit showStatusMsg(tr("空闲"));
+                closeSerialToIdle(serial);
+                return ;
+            }
+            break;
+        case THREAD_STA_FLASH_TO_FILE:
+            if (!readFlashToSaveAsFile(serial))   //flash save as file
+            {
+                closeSerialToIdle(serial);
                 return ;
             }
             break;
@@ -346,13 +494,16 @@ void MyThread::run()
         case THREAD_STA_SYNC_DATETIME:
             emit showMsgBox(tr("同步系统时间到设备"), tr("成功!!!"));
             break;
+        case THREAD_STA_FLASH_TO_FILE:
+            emit showMsgBox(tr("读取flash位置%1的内容").arg(setAddress), tr("完成!!!"));
+            break;
+            break;
         default:
             break;
         }
     }
 
-    serial.close();
-    emit showStatusMsg(tr("空闲"));
+    closeSerialToIdle(serial);
     isStopped = true;
     status = THREAD_STA_NONE;
     qDebug("finish!!! %s", TIMEMS);

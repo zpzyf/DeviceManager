@@ -14,6 +14,7 @@ public:
     ~MyThread();
 
 signals:
+    void setProcessRange(int minimum, int maximum);
     void setProcessValue(quint32 value);
     void showSendCnt(quint32 cnt);
     void showRecvCnt(quint32 cnt);
@@ -31,16 +32,17 @@ public:
     void stop(bool st);
     quint16 serialWriteRead(QSerialPort &serial, const QByteArray &send, QByteArray &recv, quint16 sendTimeout, quint16 recvTimeout);
     bool syncDataToTerminal(QSerialPort &serial, const QByteArray &sendBuf, const quint8 sCmd, QByteArray &recvBuf,const quint8 toCompareCmd);
-    bool handleSendFile(QSerialPort &serial);
+    bool writeFileToFlash(QSerialPort &serial);
     bool writePcDateTimeToDev(QSerialPort &serial); //写PC当前时间到设备
     bool readInfoFromDev(QSerialPort &serial);
-
+    bool readFlashToSaveAsFile(QSerialPort &serial);
+    void closeSerialToIdle(QSerialPort &serial);
     SettingsDialog::Settings settingPara;
     QString filePath;
     volatile bool spiflashIsChk;
     volatile bool nandflashIsChk;
     volatile bool sdcardIsChk;
-    quint32 sendAddr;
+    quint32 setAddress;
     void setHandleStatus(quint8 sta);
 private:
     volatile bool isStopped;

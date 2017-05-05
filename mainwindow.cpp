@@ -44,9 +44,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->readDeviceInfoPushButton, &QPushButton::clicked, this, &MainWindow::readDeviceInfo);
     connect(ui->btnBrowse, &QPushButton::clicked, this, &MainWindow::browseFile);
     connect(ui->btnSend, &QPushButton::clicked, this, &MainWindow::sendFile);
+    connect(ui->btnSaveToFile, &QPushButton::clicked, this, &MainWindow::readSaveAsFile);
     connect(&thread, SIGNAL(showSendCnt(quint32)), this, SLOT(labelSendCnt(quint32)));
     connect(&thread, SIGNAL(showRecvCnt(quint32)), this, SLOT(labelRecvCnt(quint32)));
-    connect(&thread, SIGNAL(setProcessValue(quint32)), this, SLOT(processBar(quint32)));
+    connect(&thread, SIGNAL(setProcessValue(quint32)), this, SLOT(setProcessBarValue(quint32)));
+    connect(&thread, SIGNAL(setProcessRange(int,int)), this, SLOT(setProcessBarRange(int,int)));
     connect(&thread, SIGNAL(showLog(quint8,QByteArray)), this, SLOT(logAppend(quint8,QByteArray)));
     connect(&thread, SIGNAL(showStatusMsg(QString)), this, SLOT(showStatusMessage(QString)));
     connect(&thread, SIGNAL(showMsgBox(QString,QString)), this, SLOT(warningBox(QString,QString)));
@@ -113,14 +115,124 @@ void MainWindow::browseFile()
     ui->progressBar->setValue(0);
 }
 
-void MainWindow::processBar(quint32 value)
+void MainWindow::setProcessBarValue(quint32 value)
 {
     ui->progressBar->setValue(value);
 }
 
+void MainWindow::setProcessBarRange(int min, int max)
+{
+    ui->progressBar->setRange(min, max);
+}
+
+void MainWindow::readSaveAsFile()
+{
+    QString filename = QFileDialog::getSaveFileName(this,
+                                                    QString::fromLocal8Bit("文件另存为"),
+                                                    "",
+                                                    tr("Images (*.bin);; Text files (*.txt);; All File (*.*)"));
+    thread.settingPara = settingsDialog->settings();
+
+
+    if (ui->spiflashChk->isChecked())
+    {
+        thread.spiflashIsChk = true;
+        thread.nandflashIsChk = false;
+        thread.sdcardIsChk = false;
+    }
+    else if (ui->nandflashChk->isChecked())
+    {
+        thread.spiflashIsChk = false;
+        thread.nandflashIsChk = true;
+        thread.sdcardIsChk = false;
+    }
+    else if (ui->sdcardChk->isChecked())
+    {
+        thread.spiflashIsChk = false;
+        thread.nandflashIsChk = false;
+        thread.sdcardIsChk = true;
+    }
+
+    if (!filename.isEmpty())
+    {
+        QFile file(filename);
+
+        if (!file.open(QIODevice::WriteOnly))
+        {
+            QMessageBox msgBox;
+            msgBox.setText("保存文件失败");
+            msgBox.exec();
+        }
+        else
+        {
+            if (thread.isRunning())
+            {
+                ui->btnSend->setText(tr("读出"));
+                thread.stop(true);
+            }
+            else
+            {
+                thread.stop(false);
+                QFileInfo fi(file);
+                QString filePath = QDir::toNativeSeparators(fi.absoluteFilePath());
+                thread.filePath = filePath;
+                logAppend(0x00, filePath.toLatin1());
+                //计算地址
+                //检查地址格式是否合法
+                if (!ui->editAddress->text().isEmpty())
+                {
+                    QString addressStr = ui->editAddress->text();
+                    logAppend(0x00, tr("len = %1").arg(addressStr.length()).toLatin1());
+                    //判断长度是否超过8位数
+                    if (addressStr.length() > 8)
+                    {
+                        warningBox("错误", "长度超过8位数");
+                        return ;
+                    }
+
+                    //判断是否为奇数
+                    if (addressStr.length() % 2)
+                    {
+                        addressStr.prepend('0');
+                    }
+
+                    for (quint16 i=0; i<addressStr.length(); i++)
+                    {
+                        if (!PublicFunc::isHex(addressStr.at(i)))
+                        {
+                            warningBox(tr("错误"), tr("地址格式非法"));
+                            return;
+                        }
+                    }
+
+
+                    thread.setAddress = PublicFunc::bytesToInt(PublicFunc::hexStringToByteArray(addressStr));
+                    logAppend(0x00, PublicFunc::byteArrayToHexStr(PublicFunc::hexStringToByteArray(addressStr)).toLatin1());
+                }
+                else
+                {
+                    thread.setAddress = 0;
+                }
+
+                QEventLoop evLoop;
+                thread.setHandleStatus(THREAD_STA_FLASH_TO_FILE);
+                ui->btnSaveToFile->setText(tr("取消"));
+                thread.start(QThread::HighPriority);
+                connect(&thread, SIGNAL(finished()), &evLoop, SLOT(quit()));
+                evLoop.exec();
+
+                if (thread.isFinished())
+                {
+                    ui->btnSaveToFile->setText(tr("读出"));
+                }
+            }
+        }
+    }
+}
+
 void MainWindow::sendFile()
 {        
-    thread.sendAddr = 0;
+    thread.setAddress = 0;
     thread.settingPara = settingsDialog->settings();
 
     if (ui->spiflashChk->isChecked())
@@ -197,12 +309,12 @@ void MainWindow::sendFile()
                 }
 
 
-                thread.sendAddr = PublicFunc::bytesToInt(PublicFunc::hexStringToByteArray(addressStr));
+                thread.setAddress = PublicFunc::bytesToInt(PublicFunc::hexStringToByteArray(addressStr));
                 ui->logTextEdit->append(PublicFunc::byteArrayToHexStr(PublicFunc::hexStringToByteArray(addressStr)));
             }
             else
             {
-                thread.sendAddr = 0;
+                thread.setAddress = 0;
             }
 
             QEventLoop evLoop;            
@@ -321,3 +433,5 @@ void MainWindow::showDeviceInformation(const QString ID, const QString nandSize,
     ui->editSpiFlashSize->setText(spiSize);
     ui->editSoftwareVersion->setText(softwareVersion);
 }
+
+

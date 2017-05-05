@@ -28,7 +28,8 @@ private slots:
     void sendFile();            //发送文件    
     void writeSystemDataTimeDataToTerm(); //写PC系统当前日期之间到终端
     void readDeviceInfo();      //读设备信息    
-    void processBar(quint32 value);        
+    void setProcessBarValue(quint32 value);
+    void setProcessBarRange(int, int);
     void labelSendCnt(const quint32 cnt);
     void labelRecvCnt(const quint32 cnt);
     void logAppend(quint8 type, const QByteArray msg);    //追加日志
@@ -36,6 +37,7 @@ private slots:
     void warningBox(const QString tital, const QString msg);
     void saveErrLog(const QString errMsg);   //保存错误信息
     void showDeviceInformation(const QString ID, const QString nandSize, const QString sdcardSize, const QString spiSize, const QString softwareVersion);
+    void readSaveAsFile(void);
 public:        
 
 private:
