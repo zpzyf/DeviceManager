@@ -79,6 +79,7 @@ bool MyThread::syncDataToTerminal(QSerialPort &serial,const QByteArray &sendBuf,
     rbuf.resize(0x200);
     tbuf.resize(0x200);
 
+    msleep(50);
     PublicFunc::encodeFuguProtocolPacket(sendBuf, sCmd, sbuf);
 
     if (serialWriteRead(serial, sbuf, rbuf, 80, 80))
@@ -128,7 +129,6 @@ bool MyThread::readFlashToSaveAsFile(QSerialPort &serial)
         return false;
     }
 
-    msleep(50);
     //发送保存位置
     if (spiflashIsChk)
     {
@@ -155,15 +155,11 @@ bool MyThread::readFlashToSaveAsFile(QSerialPort &serial)
         }
     }
     //发送读取标志
-    msleep(50);
-
     if (!syncDataToTerminal(serial, NULL, READ, tbuf, ACK))
     {
         emit saveErrInfoLog(tr("%1 %2(%3): READ error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
         return false;
     }
-
-    msleep(50);
     //发送文件
     if (!filePath.isEmpty())
     {
@@ -227,7 +223,6 @@ bool MyThread::readFlashToSaveAsFile(QSerialPort &serial)
                     file.seek(cumulativeCnt);
                     emit setProcessValue(cumulativeCnt);
                     i++;
-                    msleep(50);
                 }
             }
 
@@ -259,7 +254,7 @@ bool MyThread::writeFileToFlash(QSerialPort &serial)
         closeSerialToIdle(serial);
         return false;
     }
-    msleep(50);
+
     //发送保存位置
     if (spiflashIsChk)
     {
@@ -286,7 +281,6 @@ bool MyThread::writeFileToFlash(QSerialPort &serial)
         }
     }
 
-    msleep(50);
     //发送写标志
     if (!syncDataToTerminal(serial, NULL, WRITE, tbuf, ACK))
     {
@@ -294,7 +288,6 @@ bool MyThread::writeFileToFlash(QSerialPort &serial)
         return false;
     }
 
-    msleep(50);
     //发送文件
     if (!filePath.isEmpty())
     {
@@ -355,7 +348,6 @@ bool MyThread::writeFileToFlash(QSerialPort &serial)
                     file.seek(cumulativeCnt);
                     emit setProcessValue(cumulativeCnt);
                     i++;
-                    msleep(50);
                 }
             }
 
@@ -388,22 +380,56 @@ bool MyThread::writePcDateTimeToDev(QSerialPort &serial)
 
 bool MyThread::readInfoFromDev(QSerialPort &serial)
 {
-    QByteArray tbuf;
-    tbuf.resize(0x200);
+    QByteArray devId,
+            nandFlashSize,
+            sdcardSize,
+            spiFlashSize,
+            softwareVersion;
+    devId.clear();
+    nandFlashSize.clear();
+    sdcardSize.clear();
+    spiFlashSize.clear();
+    softwareVersion.clear();
 
-    if (!syncDataToTerminal(serial, NULL, READ_DEV_ID, tbuf, SDAT))
+    if (!syncDataToTerminal(serial, NULL, READ_DEV_ID, devId, SDAT))
     {
         emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
         return false;
     }
-    //解析tbuf
-    //QStringList list(tr(tbuf).split(","));
-    emit showLog(0x00, tr("%1 byte").arg(tr(tbuf).length()).toLatin1());
-    emit showDevInfo(tr(tbuf),
-                     "NULL",
-                     "NULL",
-                     "NULL",
-                     "NULL");
+
+    if (!syncDataToTerminal(serial, NULL, READ_DEV_NANDFLASH_SIZE, nandFlashSize, SDAT))
+    {
+        emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
+        return false;
+    }
+
+    if (!syncDataToTerminal(serial, NULL, READ_DEV_SDCARD_SIZE, sdcardSize, SDAT))
+    {
+        emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
+        return false;
+    }
+
+    if (!syncDataToTerminal(serial, NULL, READ_DEV_SPIFLASH_SIZE, spiFlashSize, SDAT))
+    {
+        emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
+        return false;
+    }
+
+    if (!syncDataToTerminal(serial, NULL, READ_DEV_VERSION_INFO, softwareVersion, SDAT))
+    {
+        emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
+        return false;
+    }
+//    emit showLog(0x00, tr("%1 %2 %3 %4 %5").arg(devId.size()).arg(nandFlashSize.size())
+//                 .arg(sdcardSize.size())
+//                 .arg(spiFlashSize.size())
+//                 .arg(softwareVersion.size()).toLatin1());
+
+    emit showDevInfo(tr(devId),
+                     tr(nandFlashSize),
+                     tr(sdcardSize),
+                     tr(spiFlashSize),
+                     tr(softwareVersion));
     return true;
 }
 

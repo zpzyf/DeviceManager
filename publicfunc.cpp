@@ -70,10 +70,11 @@ quint16 PublicFunc::decodeFuguProtocolPacket(const QByteArray &rbuf, quint8 &tCm
         {
             if (tlen > 0)
             {
-                memcpy(tbuf.data(), &buf[5], tlen - 1);
+                tbuf.resize(tlen);
+                memcpy(tbuf.data(), &buf[5], tlen);
             }
 
-            return rbuf.size();
+            return tlen;
         }
     }
 

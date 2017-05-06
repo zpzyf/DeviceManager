@@ -427,10 +427,15 @@ void MainWindow::saveErrLog(const QString errMsg)
 
 void MainWindow::showDeviceInformation(const QString ID, const QString nandSize, const QString sdcardSize, const QString spiSize, const QString softwareVersion)
 {
+    ui->editDeviceId->clear();
     ui->editDeviceId->setText(ID);
+    ui->editNandFlashSize->clear();
     ui->editNandFlashSize->setText(nandSize);
+    ui->editSdcardSize->clear();
     ui->editSdcardSize->setText(sdcardSize);
+    ui->editSpiFlashSize->clear();
     ui->editSpiFlashSize->setText(spiSize);
+    ui->editSoftwareVersion->clear();
     ui->editSoftwareVersion->setText(softwareVersion);
 }
 
