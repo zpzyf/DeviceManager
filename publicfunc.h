@@ -92,16 +92,16 @@ public:
     }
     //ByteArray转int
     static int bytesToInt(QByteArray bytes) {
-        int addr = bytes[0] & 0x000000FF;
-        addr |= ((bytes[1] << 8) & 0x0000FF00);
-        addr |= ((bytes[2] << 16) & 0x00FF0000);
-        addr |= ((bytes[3] << 24) & 0xFF000000);
+        int addr = bytes[3] & 0x000000FF;
+        addr |= ((bytes[2] << 8) & 0x0000FF00);
+        addr |= ((bytes[1] << 16) & 0x00FF0000);
+        addr |= ((bytes[0] << 24) & 0xFF000000);
         return addr;
     }
 
     static quint8 XORcheck(const QByteArray &msg);
     static void encodeFuguProtocolPacket(const QByteArray &infoUnit, quint8 cmd, QByteArray &sbuf);
-    static quint16 decodeFuguProtocolPacket(const QByteArray &rbuf, quint8 &tCmd, QByteArray &tbuf);
+    static bool decodeFuguProtocolPacket(const QByteArray &rbuf, quint8 &tCmd, QByteArray &tbuf);
 
 private:
 

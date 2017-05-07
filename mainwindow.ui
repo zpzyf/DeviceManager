@@ -155,23 +155,30 @@
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
+          <widget class="QRadioButton" name="bootChk">
+           <property name="text">
+            <string>BOOT</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QRadioButton" name="sdcardChk">
            <property name="text">
-            <string>SD CARD</string>
+            <string>SD</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QRadioButton" name="spiflashChk">
            <property name="text">
-            <string>SPI FLASH</string>
+            <string>SPI FL</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QRadioButton" name="nandflashChk">
            <property name="text">
-            <string>NAND FLASH</string>
+            <string>NAND FL</string>
            </property>
           </widget>
          </item>

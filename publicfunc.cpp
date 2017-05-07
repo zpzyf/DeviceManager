@@ -51,7 +51,7 @@ void PublicFunc::encodeFuguProtocolPacket(const QByteArray &infoUnit, quint8 cmd
     sbuf = QByteArray((const char *)buf, tlen);
 }
 
-quint16 PublicFunc::decodeFuguProtocolPacket(const QByteArray &rbuf, quint8 &tCmd, QByteArray &tbuf)
+bool PublicFunc::decodeFuguProtocolPacket(const QByteArray &rbuf, quint8 &tCmd, QByteArray &tbuf)
 {
     quint8 buf[0x200] = {0};
     quint16 len = 0;
@@ -74,9 +74,9 @@ quint16 PublicFunc::decodeFuguProtocolPacket(const QByteArray &rbuf, quint8 &tCm
                 memcpy(tbuf.data(), &buf[5], tlen);
             }
 
-            return tlen;
+            return true;
         }
     }
 
-    return 0;
+    return false;
 }

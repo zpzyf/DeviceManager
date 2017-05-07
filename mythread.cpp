@@ -9,10 +9,7 @@
 
 MyThread::MyThread()
 {
-    isStopped = true;    
-    spiflashIsChk = false;
-    nandflashIsChk = false;
-    sdcardIsChk = false;
+    isStopped = true;
     status = THREAD_STA_NONE;
 }
 
@@ -130,9 +127,17 @@ bool MyThread::readFlashToSaveAsFile(QSerialPort &serial)
     }
 
     //发送保存位置
-    if (spiflashIsChk)
+    if (bootChk)
     {
-        if (!syncDataToTerminal(serial, tr("SPI").toLatin1(), POSI, tbuf, ACK))
+        if (!syncDataToTerminal(serial, tr(TO_BOOT).toLatin1(), POSI, tbuf, ACK))
+        {
+            emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
+            return false;
+        }
+    }
+    else if (spiflashIsChk)
+    {
+        if (!syncDataToTerminal(serial, tr(TO_SPIFLASH).toLatin1(), POSI, tbuf, ACK))
         {
             emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
             return false;
@@ -140,7 +145,7 @@ bool MyThread::readFlashToSaveAsFile(QSerialPort &serial)
     }
     else if (nandflashIsChk)
     {
-        if (!syncDataToTerminal(serial, tr("NAND").toLatin1(), POSI, tbuf, ACK))
+        if (!syncDataToTerminal(serial, tr(TO_NANDFLASH).toLatin1(), POSI, tbuf, ACK))
         {
             emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
             return false;
@@ -148,12 +153,13 @@ bool MyThread::readFlashToSaveAsFile(QSerialPort &serial)
     }
     else if (sdcardIsChk)
     {
-        if (!syncDataToTerminal(serial, tr("SDCARD_FAT").toLatin1(), POSI, tbuf, ACK))
+        if (!syncDataToTerminal(serial, tr(TO_SDCARD).toLatin1(), POSI, tbuf, ACK))
         {
             emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
             return false;
         }
     }
+
     //发送读取标志
     if (!syncDataToTerminal(serial, NULL, READ, tbuf, ACK))
     {
@@ -200,7 +206,7 @@ bool MyThread::readFlashToSaveAsFile(QSerialPort &serial)
                         fData = file.read(totalSize%256);
                         fData.prepend(PublicFunc::intToByte(setAddress));
 
-                        if (!syncDataToTerminal(serial, fData, RDAT, tbuf, ACK))
+                        if (!syncDataToTerminal(serial, fData, RDAT, tbuf, SDAT))
                         {
                             emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
                             return false;
@@ -212,7 +218,7 @@ bool MyThread::readFlashToSaveAsFile(QSerialPort &serial)
                         fData = file.read(256);
                         fData.prepend(PublicFunc::intToByte(setAddress));
 
-                        if (!syncDataToTerminal(serial, fData, RDAT, tbuf, ACK))
+                        if (!syncDataToTerminal(serial, fData, RDAT, tbuf, SDAT))
                         {
                             emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
                             return false;
@@ -256,9 +262,17 @@ bool MyThread::writeFileToFlash(QSerialPort &serial)
     }
 
     //发送保存位置
-    if (spiflashIsChk)
+    if (bootChk)
     {
-        if (!syncDataToTerminal(serial, tr("SPI").toLatin1(), POSI, tbuf, ACK))
+        if (!syncDataToTerminal(serial, tr(TO_BOOT).toLatin1(), POSI, tbuf, ACK))
+        {
+            emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
+            return false;
+        }
+    }
+    else if (spiflashIsChk)
+    {
+        if (!syncDataToTerminal(serial, tr(TO_SPIFLASH).toLatin1(), POSI, tbuf, ACK))
         {
             emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
             return false;
@@ -266,7 +280,7 @@ bool MyThread::writeFileToFlash(QSerialPort &serial)
     }
     else if (nandflashIsChk)
     {
-        if (!syncDataToTerminal(serial, tr("NAND").toLatin1(), POSI, tbuf, ACK))
+        if (!syncDataToTerminal(serial, tr(TO_NANDFLASH).toLatin1(), POSI, tbuf, ACK))
         {
             emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
             return false;
@@ -274,7 +288,7 @@ bool MyThread::writeFileToFlash(QSerialPort &serial)
     }
     else if (sdcardIsChk)
     {
-        if (!syncDataToTerminal(serial, tr("SDCARD_FAT").toLatin1(), POSI, tbuf, ACK))
+        if (!syncDataToTerminal(serial, tr(TO_SDCARD).toLatin1(), POSI, tbuf, ACK))
         {
             emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
             return false;

@@ -39,6 +39,7 @@ public:
     void closeSerialToIdle(QSerialPort &serial);
     SettingsDialog::Settings settingPara;
     QString filePath;
+    volatile bool bootChk;
     volatile bool spiflashIsChk;
     volatile bool nandflashIsChk;
     volatile bool sdcardIsChk;

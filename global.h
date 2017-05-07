@@ -51,5 +51,8 @@ public:
 #define TO_SPIFLASH     "SPI"
 #define TO_NANDFLASH    "NAND"
 #define TO_SDCARD       "SDCARD"
+#define TO_BOOT         "BOOT"
+
+
 
 #endif // GLOBAL_H
