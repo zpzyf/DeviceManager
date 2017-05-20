@@ -53,6 +53,6 @@ public:
 #define TO_SDCARD       "SDCARD"
 #define TO_BOOT         "BOOT"
 
-
+#define DATAPACK_MAX_SIZE   0x100
 
 #endif // GLOBAL_H

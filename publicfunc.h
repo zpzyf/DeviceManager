@@ -88,6 +88,7 @@ public:
         abyte0[2] = (uchar) ((0x0000ff00 & number) >> 8);
         abyte0[1] = (uchar) ((0x00ff0000 & number) >> 16);
         abyte0[0] = (uchar) ((0xff000000 & number) >> 24);
+
         return abyte0;
     }
     //ByteArray转int
@@ -96,9 +97,12 @@ public:
         addr |= ((bytes[2] << 8) & 0x0000FF00);
         addr |= ((bytes[1] << 16) & 0x00FF0000);
         addr |= ((bytes[0] << 24) & 0xFF000000);
+
         return addr;
     }
 
+    static void tranDt_U16ToBuf(quint8 *buf,quint16 dt);
+    static void tranDt_U32ToBuf(quint8 *buf,quint32 dt);
     static quint8 XORcheck(const QByteArray &msg);
     static void encodeFuguProtocolPacket(const QByteArray &infoUnit, quint8 cmd, QByteArray &sbuf);
     static bool decodeFuguProtocolPacket(const QByteArray &rbuf, quint8 &tCmd, QByteArray &tbuf);

@@ -47,7 +47,7 @@ void PublicFunc::encodeFuguProtocolPacket(const QByteArray &infoUnit, quint8 cmd
     buf[tlen++] = '#';
     buf[tlen++] = '#';
 
-
+    sbuf.resize(tlen);
     sbuf = QByteArray((const char *)buf, tlen);
 }
 
@@ -79,4 +79,21 @@ bool PublicFunc::decodeFuguProtocolPacket(const QByteArray &rbuf, quint8 &tCmd, 
     }
 
     return false;
+}
+
+//Uint --> buf
+void PublicFunc::tranDt_U16ToBuf(quint8 *buf,quint16 dt)
+{
+    *buf++ = (dt >>  8) & 0xff;
+    *buf++ = dt & 0xff;
+}
+
+
+//Ulong --> buf
+void PublicFunc::tranDt_U32ToBuf(quint8 *buf,quint32 dt)
+{
+    *buf++ = (dt >> 24) & 0xff;
+    *buf++ = (dt >> 16) & 0xff;
+    *buf++ = (dt >>  8) & 0xff;
+    *buf++ = (dt      ) & 0xff;
 }

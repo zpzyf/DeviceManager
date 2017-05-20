@@ -12,6 +12,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 //    setFixedSize(800, 600);
+    ui->editAddress->setMaxLength(8);
     ui->editAddress->setText("00000000");
     ui->labelRecvCnt->setText("R:       ");
     ui->labelSendCnt->setText("S:       ");
@@ -129,57 +130,48 @@ void MainWindow::setProcessBarRange(int min, int max)
 
 void MainWindow::readSaveAsFile()
 {
-    QString filename = QFileDialog::getSaveFileName(this,
-                                                    QString::fromLocal8Bit("文件另存为"),
-                                                    "",
-                                                    tr("Images (*.bin);; Text files (*.txt);; All File (*.*)"));
     thread.settingPara = settingsDialog->settings();
 
-    if (ui->bootChk->isChecked())
+    if (thread.isRunning())
     {
-        thread.spiflashIsChk = false;
-        thread.nandflashIsChk = false;
-        thread.sdcardIsChk = false;
-        thread.bootChk = true;
+        ui->btnSaveToFile->setText(tr("读出"));
+        thread.stop(true);
     }
-    else if (ui->spiflashChk->isChecked())
+    else
     {
-        thread.spiflashIsChk = true;
-        thread.nandflashIsChk = false;
-        thread.sdcardIsChk = false;
-        thread.bootChk = false;
-    }
-    else if (ui->nandflashChk->isChecked())
-    {
-        thread.spiflashIsChk = false;
-        thread.nandflashIsChk = true;
-        thread.sdcardIsChk = false;
-        thread.bootChk = false;
-    }
-    else if (ui->sdcardChk->isChecked())
-    {
-        thread.spiflashIsChk = false;
-        thread.nandflashIsChk = false;
-        thread.sdcardIsChk = true;
-        thread.bootChk = false;
-    }
-
-    if (!filename.isEmpty())
-    {
-        QFile file(filename);
-
-        if (!file.open(QIODevice::WriteOnly))
+        if (ui->spiflashChk->isChecked())
         {
-            QMessageBox msgBox;
-            msgBox.setText("保存文件失败");
-            msgBox.exec();
+            thread.spiflashIsChk = true;
+            thread.nandflashIsChk = false;
+            thread.sdcardIsChk = false;
+            thread.bootChk = false;
+        }
+        else if (ui->nandflashChk->isChecked())
+        {
+            thread.spiflashIsChk = false;
+            thread.nandflashIsChk = true;
+            thread.sdcardIsChk = false;
+            thread.bootChk = false;
         }
         else
         {
-            if (thread.isRunning())
+            return;
+        }
+
+        QString filename = QFileDialog::getSaveFileName(this,
+                                                        QString::fromLocal8Bit("文件另存为"),
+                                                        "",
+                                                        tr("Images (*.bin);; Text files (*.txt);; All File (*.*)"));
+
+        if (!filename.isEmpty())
+        {
+            QFile file(filename);
+
+            if (!file.open(QIODevice::WriteOnly | QIODevice::Append))
             {
-                ui->btnSend->setText(tr("读出"));
-                thread.stop(true);
+                QMessageBox msgBox;
+                msgBox.setText("保存文件失败");
+                msgBox.exec();
             }
             else
             {
@@ -187,6 +179,7 @@ void MainWindow::readSaveAsFile()
                 QFileInfo fi(file);
                 QString filePath = QDir::toNativeSeparators(fi.absoluteFilePath());
                 thread.filePath = filePath;
+                file.close();
                 logAppend(0x00, filePath.toLatin1());
                 //计算地址
                 //检查地址格式是否合法
