@@ -36,9 +36,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->spiflashChk->setChecked(true);
 
-//    ui->editAddress->setValidator(new QIntValidator(0, 100000000, this));  //限制输入范围0~8个字符
-
-
     connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
     connect(ui->actionConfigure, &QAction::triggered, settingsDialog, &SettingsDialog::show);
     connect(ui->actionClear, &QAction::triggered, this, &MainWindow::clearLog);
@@ -142,17 +139,8 @@ void MainWindow::readSaveAsFile()
         if (ui->spiflashChk->isChecked())
         {
             thread.spiflashIsChk = true;
-            thread.nandflashIsChk = false;
-            thread.sdcardIsChk = false;
             thread.bootChk = false;
-        }
-        else if (ui->nandflashChk->isChecked())
-        {
-            thread.spiflashIsChk = false;
-            thread.nandflashIsChk = true;
-            thread.sdcardIsChk = false;
-            thread.bootChk = false;
-        }
+        }        
         else
         {
             return;
@@ -242,29 +230,11 @@ void MainWindow::sendFile()
     if (ui->bootChk->isChecked())
     {
         thread.spiflashIsChk = false;
-        thread.nandflashIsChk = false;
-        thread.sdcardIsChk = false;
         thread.bootChk = true;
     }
     else if (ui->spiflashChk->isChecked())
     {
         thread.spiflashIsChk = true;
-        thread.nandflashIsChk = false;
-        thread.sdcardIsChk = false;
-        thread.bootChk = false;
-    }
-    else if (ui->nandflashChk->isChecked())
-    {
-        thread.spiflashIsChk = false;
-        thread.nandflashIsChk = true;
-        thread.sdcardIsChk = false;
-        thread.bootChk = false;
-    }
-    else if (ui->sdcardChk->isChecked())
-    {
-        thread.spiflashIsChk = false;
-        thread.nandflashIsChk = false;
-        thread.sdcardIsChk = true;
         thread.bootChk = false;
     }
 

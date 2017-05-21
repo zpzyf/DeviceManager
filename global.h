@@ -49,8 +49,6 @@ public:
 #define READ_DEV_VERSION_INFO   0x85    //读软件版本信息
 
 #define TO_SPIFLASH     "SPI"
-#define TO_NANDFLASH    "NAND"
-#define TO_SDCARD       "SDCARD"
 #define TO_BOOT         "BOOT"
 
 #define DATAPACK_MAX_SIZE   0x100
