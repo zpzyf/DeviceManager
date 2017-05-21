@@ -112,10 +112,6 @@ bool MyThread::readFlashToSaveAsFile(QSerialPort &serial)
     QByteArray tbuf;
     QByteArray currentFlashSize;
 
-//    sbuf.resize(0x200);
-//    rbuf.resize(0x200);
-//    tbuf.resize(0x200);
-
     //发送同步消息
     if (!syncDataToTerminal(serial, NULL, SOH, tbuf, ACK))
     {
@@ -142,6 +138,12 @@ bool MyThread::readFlashToSaveAsFile(QSerialPort &serial)
     if (!syncDataToTerminal(serial, NULL, READ, tbuf, ACK))
     {
         emit saveErrInfoLog(tr("%1 %2(%3): READ error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
+        return false;
+    }
+
+    if (setAddress >= PublicFunc::bytesToInt(currentFlashSize))
+    {
+        emit showMsgBox("地址错误", "超过flash实际空间大小!!!");
         return false;
     }
 
@@ -211,16 +213,16 @@ bool MyThread::writeFileToFlash(QSerialPort &serial)
     QByteArray tbuf;
     QByteArray currentFlashSize;
     qint32 i = 0;
-    quint8 retry;
+    int retry;
 
     //发送同步消息
     retry = 100;
 
-    while (retry--)
+    while (!isStopped)
     {
-        if (isStopped)
+        if ((retry) && (--retry == 0))
         {
-            return false;
+            break;
         }
 
         if (syncDataToTerminal(serial, NULL, SOH, tbuf, ACK))
@@ -239,10 +241,15 @@ bool MyThread::writeFileToFlash(QSerialPort &serial)
     //发送保存位置
     if (bootChk)
     {
-        retry = 3;
+        retry = 4;
 
-        while (retry--)
+        while (!isStopped)
         {
+            if ((retry) && (--retry == 0))
+            {
+                break;
+            }
+
             if (syncDataToTerminal(serial, tr(TO_BOOT).toLatin1(), POSI, tbuf, ACK))
             {
                 break;
@@ -252,7 +259,7 @@ bool MyThread::writeFileToFlash(QSerialPort &serial)
 
         if (retry == 0)
         {
-            emit saveErrInfoLog(tr("%1 %2(%3): boot retry error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
+            emit showMsgBox("位置", "通信端口不对");
             return false;
         }
 
@@ -281,138 +288,85 @@ bool MyThread::writeFileToFlash(QSerialPort &serial)
     }
 
     //发送文件
-    if (bootChk)
+    //检查文件是否有内容
+    if (!filePath.isEmpty())
     {
+        QFile file(filePath);
         quint32 totalSize = QFileInfo(filePath).size();
-
-        //检查文件是否有内容
-        if (!filePath.isEmpty() && totalSize > 0)
+        //打开文件
+        if (totalSize > 0 && file.open(QFile::ReadOnly))
         {
-            //打开文件
-            QFile file(filePath);
+            QByteArray fData;
+            quint32 addr = 0;
+            quint32 cumulativeCnt; //累计要发送的数目
 
-            if (file.open(QFile::ReadOnly))
+            if (bootChk)
             {
-                QByteArray fData;
-                int addr = 0;
-                fData.resize(0x200);
-                quint32 cumulativeCnt; //累计要发送的数目
-                emit setProcessValue(0);
                 cumulativeCnt = 0x1000;
                 file.seek(0x1000);
-                i = 0;
-
-                while (!file.atEnd())
-                {
-                    if (isStopped)
-                    {
-                        break;
-                    }
-
-                    if (i != 0)
-                    {
-                        addr += DATAPACK_MAX_SIZE;
-                    }
-
-                    if (cumulativeCnt + totalSize%DATAPACK_MAX_SIZE == totalSize)
-                    {
-                        fData = file.read(totalSize%DATAPACK_MAX_SIZE);
-                        fData.prepend(PublicFunc::intToByte(addr));
-
-                        if (!syncDataToTerminal(serial, fData, SDAT, tbuf, ACK))
-                        {
-                            emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
-                            return false;
-                        }
-                        cumulativeCnt += totalSize%DATAPACK_MAX_SIZE;
-                    }
-                    else
-                    {
-                        fData = file.read(DATAPACK_MAX_SIZE);
-                        fData.prepend(PublicFunc::intToByte(addr));
-
-                        if (!syncDataToTerminal(serial, fData, SDAT, tbuf, ACK))
-                        {
-                            emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
-                            return false;
-                        }
-                        cumulativeCnt += DATAPACK_MAX_SIZE;
-                    }
-
-                    file.seek(cumulativeCnt);
-                    emit setProcessValue(cumulativeCnt);
-                    i++;
-                }
             }
-
-            file.close();
-        }
-    }
-    else if (setAddress < PublicFunc::bytesToInt(currentFlashSize) && !filePath.isEmpty())
-    {
-        quint32 totalSize = QFileInfo(filePath).size();
-        //检查文件是否有内容
-        if (!filePath.isEmpty() && totalSize > 0)
-        {
-            //打开文件
-            QFile file(filePath);
-
-            if (file.open(QFile::ReadOnly))
+            else if (spiflashIsChk)
             {
-                QByteArray fData;
-                fData.resize(0x200);
-                quint32 cumulativeCnt; //累计要发送的数目
-                emit setProcessValue(0);
+                addr = setAddress;
+
+                if (addr+0x100 >= PublicFunc::bytesToInt(currentFlashSize))
+                {
+                    emit showMsgBox("地址错误", "超过flash实际空间大小!!!");
+                    return false;
+                }
                 cumulativeCnt = 0;
                 file.seek(0);
-                i = 0;
-
-                while (!file.atEnd())
-                {
-                    if (isStopped)
-                    {
-                        break;
-                    }
-
-                    if (i != 0)
-                    {
-                        setAddress += DATAPACK_MAX_SIZE;
-                    }
-
-                    if (cumulativeCnt + totalSize%DATAPACK_MAX_SIZE == totalSize)
-                    {
-                        fData = file.read(totalSize%DATAPACK_MAX_SIZE);
-                        fData.prepend(PublicFunc::intToByte(setAddress));
-
-                        if (!syncDataToTerminal(serial, fData, SDAT, tbuf, ACK))
-                        {
-                            emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
-                            return false;
-                        }
-                        cumulativeCnt += totalSize%DATAPACK_MAX_SIZE;
-                    }
-                    else
-                    {
-                        fData = file.read(DATAPACK_MAX_SIZE);
-                        fData.prepend(PublicFunc::intToByte(setAddress));
-
-                        if (!syncDataToTerminal(serial, fData, SDAT, tbuf, ACK))
-                        {
-                            emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
-                            return false;
-                        }
-                        cumulativeCnt += DATAPACK_MAX_SIZE;
-                    }
-
-                    file.seek(cumulativeCnt);
-                    emit setProcessValue(cumulativeCnt);
-                    i++;
-                }
             }
 
-            file.close();
+            emit setProcessRange(cumulativeCnt, totalSize);
+            emit setProcessValue(cumulativeCnt);
 
+            i = 0;
+
+            while (!file.atEnd())
+            {
+                if (isStopped)
+                {
+                    break;
+                }
+
+                if (i != 0)
+                {
+                    addr += DATAPACK_MAX_SIZE;
+                }
+
+                if (cumulativeCnt + totalSize%DATAPACK_MAX_SIZE == totalSize)
+                {
+                    fData = file.read(totalSize%DATAPACK_MAX_SIZE);
+                    fData.prepend(PublicFunc::intToByte(addr));
+
+                    if (!syncDataToTerminal(serial, fData, SDAT, tbuf, ACK))
+                    {
+                        emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
+                        return false;
+                    }
+                    cumulativeCnt += totalSize%DATAPACK_MAX_SIZE;
+                }
+                else
+                {
+                    fData = file.read(DATAPACK_MAX_SIZE);
+                    fData.prepend(PublicFunc::intToByte(addr));
+
+                    if (!syncDataToTerminal(serial, fData, SDAT, tbuf, ACK))
+                    {
+                        emit saveErrInfoLog(tr("%1 %2(%3): syncDataToTerminal error").arg(CURRENT_SYSTEM_DATETIME).arg(__func__).arg(__LINE__));
+                        return false;
+                    }
+                    cumulativeCnt += DATAPACK_MAX_SIZE;
+                }
+
+                file.seek(cumulativeCnt);
+                emit setProcessValue(cumulativeCnt);
+                i++;
+            }
         }
+
+        file.close();
     }
 
     //发送结束标志
@@ -505,8 +459,8 @@ void MyThread::setHandleStatus(quint8 sta)
 void MyThread::run()
 {
     QSerialPort serial;
-    QByteArray tbuf;
-    tbuf.resize(0x200);
+    QTime time;
+
 
     QMutexLocker locker(&qm);
 
@@ -535,6 +489,8 @@ void MyThread::run()
             emit showStatusMsg(tr("Open %1 error").arg(settingPara.name));
             return;
         }
+
+        time.start();
 
         switch (status) {
         case THREAD_STA_SENDFILE:
@@ -571,17 +527,16 @@ void MyThread::run()
 
         switch (status) {
         case THREAD_STA_SENDFILE:
-            emit showMsgBox(tr("发送文件状态"), tr("成功!!!"));
+            emit showMsgBox(tr("发送文件状态"), tr("成功~使用%1秒").arg(time.elapsed()/1000.0));
             break;
         case THREAD_STA_READ_DEV_INFO:
-            emit showMsgBox(tr("读取设备信息"), tr("成功!!!"));
+            emit showMsgBox(tr("读取设备信息"), tr("成功~使用%1秒").arg(time.elapsed()/1000.0));
             break;
         case THREAD_STA_SYNC_DATETIME:
-            emit showMsgBox(tr("同步系统时间到设备"), tr("成功!!!"));
+            emit showMsgBox(tr("同步系统时间到设备"), tr("成功~使用%1秒").arg(time.elapsed()/1000.0));
             break;
         case THREAD_STA_FLASH_TO_FILE:
-            emit showMsgBox(tr("读取flash位置%1的内容").arg(setAddress), tr("完成!!!"));
-            break;
+            emit showMsgBox(tr("读取flash位置%1的内容").arg(setAddress), tr("完成~使用%1秒").arg(time.elapsed()/1000.0));
             break;
         default:
             break;

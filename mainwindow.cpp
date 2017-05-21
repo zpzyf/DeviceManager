@@ -100,7 +100,7 @@ void MainWindow::browseFile()
         dir = ui->editBinPath->text();
     }
 
-    binFileName = QFileDialog::getOpenFileName( NULL, QString("加载bin文件"), dir.absolutePath() , "(*.*)" );
+    binFileName = QFileDialog::getOpenFileName( NULL, QString("加载bin文件"), dir.absolutePath() ,tr("Images (*.bin);; Hex files (*.hex);; All File (*.*)"));
 
     if (!binFileName.length())
     {
@@ -260,8 +260,6 @@ void MainWindow::sendFile()
             thread.filePath = ui->editBinPath->text().toLatin1();
             //计算文件总大小，根据包大小，设定进度条值范围
             quint32 totalSize = QFileInfo(thread.filePath).size();
-            ui->progressBar->setRange(0, totalSize);   //假设总共可以分19个包
-            ui->progressBar->setValue(0);
             ui->logTextEdit->append(thread.filePath);
             //计算地址
             //检查地址格式是否合法
