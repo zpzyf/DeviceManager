@@ -24,6 +24,7 @@ public:
 private slots:
     void about();               //关于
     void clearLog();           //清除日志
+    void checkChange();         //检查复选框
     void browseFile();          //浏览文件
     void sendFile();            //发送文件    
     void writeSystemDataTimeDataToTerm(); //写PC系统当前日期之间到终端

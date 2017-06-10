@@ -53,12 +53,35 @@ void PublicFunc::encodeFuguProtocolPacket(const QByteArray &infoUnit, quint8 cmd
 
 bool PublicFunc::decodeFuguProtocolPacket(const QByteArray &rbuf, quint8 &tCmd, QByteArray &tbuf)
 {
+    quint8 buffer[0x200] = {0};
     quint8 buf[0x200] = {0};
     quint16 len = 0;
     quint16 tlen;
 
     len = rbuf.size();
-    memcpy(buf, rbuf.data(), len);
+    memcpy(buffer, rbuf.data(), len);
+
+    int i = 0;
+
+    while (len)
+    {
+        if (buffer[i] == '@' && buffer[i+1] == '@')
+        {
+            break;
+        }
+        else
+        {
+            i++;
+            len--;
+        }
+    }
+
+    if (len == 0)
+    {
+       return false;
+    }
+
+    memcpy(buf, &buffer[i], len);
 
     if (buf[0] == '@' && buf[1] == '@' && buf[len - 2] == '#' && buf[len - 1] == '#')
     {
@@ -71,7 +94,8 @@ bool PublicFunc::decodeFuguProtocolPacket(const QByteArray &rbuf, quint8 &tCmd, 
             if (tlen > 0)
             {
                 tbuf.resize(tlen);
-                memcpy(tbuf.data(), &buf[5], tlen);
+//                memcpy(tbuf.data(), &buf[5], tlen);
+                tbuf = QByteArray((const char *)&buf[5], tlen);
             }
 
             return true;

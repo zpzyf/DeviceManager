@@ -43,7 +43,7 @@ public:
     QString filePath;
     volatile bool bootChk;
     volatile bool spiflashIsChk;
-    quint32 setAddress;
+    int setAddress;
     void setHandleStatus(quint8 sta);
 
 private:

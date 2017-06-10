@@ -77,7 +77,7 @@ bool MyThread::syncDataToTerminal(QSerialPort &serial,const QByteArray &sendBuf,
     PublicFunc::encodeFuguProtocolPacket(sendBuf, sCmd, sbuf);
 
     if (serialWriteRead(serial, sbuf, rbuf, 80, 100))
-    {
+    {        
         //解包,是否为ACK
         if (PublicFunc::decodeFuguProtocolPacket(rbuf, rCmd, tbuf))
         {
@@ -297,8 +297,8 @@ bool MyThread::writeFileToFlash(QSerialPort &serial)
         if (totalSize > 0 && file.open(QFile::ReadOnly))
         {
             QByteArray fData;
-            quint32 addr = 0;
-            quint32 cumulativeCnt; //累计要发送的数目
+            int addr = 0;
+            quint32 cumulativeCnt = 0; //累计要发送的数目
 
             if (bootChk)
             {

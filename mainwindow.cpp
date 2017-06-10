@@ -36,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->spiflashChk->setChecked(true);
 
+    connect(ui->ckHexShow, SIGNAL(clicked(bool)), this, SLOT(checkChange()));
     connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
     connect(ui->actionConfigure, &QAction::triggered, settingsDialog, &SettingsDialog::show);
     connect(ui->actionClear, &QAction::triggered, this, &MainWindow::clearLog);
@@ -87,6 +88,14 @@ void MainWindow::clearLog()
     G_set::recvCnt = 0;
     ui->labelRecvCnt->setText("R:       ");
     ui->labelSendCnt->setText("S:       ");
+}
+
+void MainWindow::checkChange()
+{
+    if (ui->ckHexShow->checkState() == Qt::Checked)
+    {
+        ui->ckLogShow->setChecked(true);
+    }
 }
 
 void MainWindow::browseFile()
@@ -259,7 +268,7 @@ void MainWindow::sendFile()
 
             thread.filePath = ui->editBinPath->text().toLatin1();
             //计算文件总大小，根据包大小，设定进度条值范围
-            quint32 totalSize = QFileInfo(thread.filePath).size();
+//            quint32 totalSize = QFileInfo(thread.filePath).size();
             ui->logTextEdit->append(thread.filePath);
             //计算地址
             //检查地址格式是否合法
@@ -365,6 +374,7 @@ void MainWindow::logAppend(quint8 type,const QByteArray msg)
 
     if (ui->ckHexShow->isChecked())
     {
+        ui->ckLogShow->setEnabled(true);
         buffer = PublicFunc::byteArrayToHexStr(msg);
     }
     else
