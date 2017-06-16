@@ -76,7 +76,7 @@ bool MyThread::syncDataToTerminal(QSerialPort &serial,const QByteArray &sendBuf,
     msleep(30);
     PublicFunc::encodeFuguProtocolPacket(sendBuf, sCmd, sbuf);
 
-    if (serialWriteRead(serial, sbuf, rbuf, 80, 100))
+    if (serialWriteRead(serial, sbuf, rbuf, 100, 80))
     {        
         //解包,是否为ACK
         if (PublicFunc::decodeFuguProtocolPacket(rbuf, rCmd, tbuf))
